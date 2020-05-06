@@ -1,0 +1,1 @@
+docker build -t community --build-arg MYSQL_WOMS_PROD=%MYSQL_WOMS_PROD% --build-arg API_KEY_POSTMARK=%API_KEY_POSTMARK% .
