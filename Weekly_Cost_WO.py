@@ -207,8 +207,13 @@ def main():
     from datetime import date
     
     today = date.today()
-    sunday = today - timedelta(days=(today.weekday() - 6) % 14)
-    saturday = today - timedelta(days=(today.weekday() - 5) % 7)
+
+    if today.weekday() < 6:
+        sunday = today - timedelta(days=(today.weekday() - 6) % 14)
+        saturday = today - timedelta(days=(today.weekday() - 5) % 7)
+    else:
+        sunday = today - timedelta(days=7)
+        saturday = today - timedelta(days=1)
 
     #saturday = '2019-12-31'
     #sunday = '2019-01-01'
