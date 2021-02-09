@@ -66,9 +66,9 @@ def SendEmail(attachments):
     from postmarker.core import PostmarkClient
     postmark = PostmarkClient(server_token=config.getpostmarktoken())
     postmark.emails.send(
-                         From='mdegano@sweetiq.com',
-                         To='renilda@sweetiq.com',
-                         Cc='mdegano@sweetiq.com',
+                         From='marco.degano@uberall.com',
+                         To='madalina.cadariu@uberall.com',
+                         Cc='marco.degano@uberall.com',
                          Subject='Weekly GMB Community Results',
                          HtmlBody= 'Please find attached the GMB Community Results associated to Work Orders for the previous week.',
                          Attachments = [attachments[0], attachments[1]]

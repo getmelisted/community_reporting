@@ -71,9 +71,9 @@ def SendEmail(attachment, body):
     
     postmark = PostmarkClient(server_token=config.getpostmarktoken())
     postmark.emails.send(
-                         From='mdegano@sweetiq.com',
-                         To='renilda@sweetiq.com',
-                         Cc='mdegano@sweetiq.com',
+                         From='marco.degano@uberall.com',
+                         To='madalina.cadariu@uberall.com',
+                         Cc='marco.degano@uberall.com',
                          Subject='Monthly Work Orders cost',
                          HtmlBody= strbody,
                          Attachments = [attachment]
