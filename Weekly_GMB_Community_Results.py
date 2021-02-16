@@ -1,10 +1,28 @@
 #This is used to generate a CSV file containing the total cost per Work Order type for the previous month.
-import mysql.connector
 import os
 import os.path
 import csv
 import datetime
-from config import *
+from urllib.parse import urlparse
+import pymysql
+
+############################################################################################################
+#Returns the database cursor
+############################################################################################################
+def get_woms_cursor(connection_string):
+    mysql_params = urlparse(connection_string)
+
+    conn = pymysql.Connect(
+        user=mysql_params.username,
+        passwd=mysql_params.password,
+        host=mysql_params.hostname,
+        port=mysql_params.port,
+        db=mysql_params.path[1:],
+        charset='utf8',
+    )
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+    return cursor
 
 ############################################################################################################
 #Deletes passed file if file already exists
@@ -64,7 +82,7 @@ def writeRAWCSV(workorder, file):
 #pip install postmarker
 def SendEmail(attachments):
     from postmarker.core import PostmarkClient
-    postmark = PostmarkClient(server_token=config.getpostmarktoken())
+    postmark = PostmarkClient(server_token=os.environ['API_KEY_POSTMARK'])
     postmark.emails.send(
                          From='marco.degano@uberall.com',
                          To='madalina.cadariu@uberall.com',
@@ -80,43 +98,27 @@ def SendEmail(attachments):
 ############################################################################################################
 def getWorkOrders(start, end):
 
-    from mysql.connector import Error
     workorders = []
-    
-    print("Connecting to MySQL")
-    try:
-        mySQLconnection = config.getwomsdbconnection()
-            
-        cursor = mySQLconnection.cursor()
-        print(f'*** Start SQL Query! ***')
-        
-        sqlquery = ("SELECT wo.wo_id, wo.wo_date,wo.wo_type,throughput.elapsed_time, throughput.updatedat, user.user_name, user.user_trust_level, throughput.old_status, throughput.new_status, wo.client_id" +
-                    " from throughput" +
-                    " inner join wo on wo.wo_id = throughput.foreign_id" +
-                    " inner join user on user.user_id = throughput.user_id" +
-                    " where wo.dir_id = 27" +
-                    " and date (throughput.updatedat) >= '" + str(start) + "'" +
-                    " and date (throughput.updatedat) <= '" + str(end) + "'" +
-                    " and wo.wo_expireddate is null" +
-                    " and user.partner_id not in (0,8,62,63)" +
-                    " and wo.wo_type in (2,3)" +
-                    " and throughput.new_status not in (13,12)")
-        
-        cursor.execute(sqlquery)
 
-        res = cursor.fetchall()
-    
-        for result in res:
-            workorders.append(result)
-        
-        print(f'*** End SQL Query! ***')
-    except Error as e :
-        print ("Error while connecting to MySQL", e)
-    finally:
-        #closing database connection.
-        if(mySQLconnection.is_connected()):
-            mySQLconnection.close()
-            print("MySQL connection is closed")
+    sqlquery = ("SELECT wo.wo_id, wo.wo_date,wo.wo_type,throughput.elapsed_time, throughput.updatedat, user.user_name, user.user_trust_level, throughput.old_status, throughput.new_status, wo.client_id" +
+                " from throughput" +
+                " inner join wo on wo.wo_id = throughput.foreign_id" +
+                " inner join user on user.user_id = throughput.user_id" +
+                " where wo.dir_id = 27" +
+                " and date (throughput.updatedat) >= '" + str(start) + "'" +
+                " and date (throughput.updatedat) <= '" + str(end) + "'" +
+                " and wo.wo_expireddate is null" +
+                " and user.partner_id not in (0,8,62,63)" +
+                " and wo.wo_type in (2,3)" +
+                " and throughput.new_status not in (13,12)")
+
+    cursor = get_woms_cursor(os.getenv('MYSQL_WOMS_PROD'))
+    cursor.execute(sqlquery)
+
+    res = cursor.fetchall()
+
+    for r in res:
+        workorders.append([r['wo_id'],r['wo_date'],r['wo_type'],r['elapsed_time'],r['updatedat'],r['user_name'],r['user_trust_level'],r['old_status'],r['new_status'],r['client_id']])
             
     return workorders
 
